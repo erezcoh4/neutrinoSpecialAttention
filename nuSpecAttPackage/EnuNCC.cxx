@@ -11,7 +11,6 @@ EnuNCC::EnuNCC( TTree * fOutTree ){
 }
 
 
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::ImpXsecGraph ( TString XsecFileName , const int Npoints , bool DoPlot){
 
@@ -28,6 +27,7 @@ void EnuNCC::ImpXsecGraph ( TString XsecFileName , const int Npoints , bool DoPl
     
     if(DoPlot) DrawXsecGraph();
 }
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::DrawXsecGraph(){
@@ -47,8 +47,6 @@ void EnuNCC::DrawXsecGraph(){
     c -> SetWindowSize(w + (w - c->GetWw()), h + (h - c->GetWh()));
     c -> SaveAs("~/Desktop/Xsec.pdf");
 }
-
-
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -119,16 +117,13 @@ void EnuNCC::DrawMomentumDist(){
 }
 
 
-
-
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
     
-//    double Ev[Npoints] , flux[Npoints];
-//    analysis.ReadGraphFromFile( EfluxFileName, Npoints, Ev, flux );
-//    TGraph * g = new TGraph( Npoints , Ev, flux  );
-//    SetEflux( g );
+    //    double Ev[Npoints] , flux[Npoints];
+    //    analysis.ReadGraphFromFile( EfluxFileName, Npoints, Ev, flux );
+    //    TGraph * g = new TGraph( Npoints , Ev, flux  );
+    //    SetEflux( g );
     
     hEflux = new TH1F("hEflux" , "neutrino energy flux - very simplified Gaussian" , 100 , 0 , 2 );
     for (int i = 0; i < 1e4; i++) {
@@ -143,8 +138,8 @@ void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
 void EnuNCC::DrawEflux(){
     
     TCanvas * c = plot.CreateCanvas("Eflux");
-//    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-//    gEflux -> Draw("apc");
+    //    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
+    //    gEflux -> Draw("apc");
     plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
     hEflux -> Draw();
     c -> SaveAs("~/Desktop/Eflux.pdf");
@@ -156,17 +151,75 @@ void EnuNCC::DrawEflux(){
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::InitOutTree(){
     
-    OutTree -> Branch("nu"      ,"TLorentzVector"       ,&nu);
-    OutTree -> Branch("n"       ,"TLorentzVector"       ,&n);
-    OutTree -> Branch("W"       ,"TLorentzVector"       ,&W);
-    OutTree -> Branch("mu"      ,"TLorentzVector"       ,&mu);
-    OutTree -> Branch("p"       ,"TLorentzVector"       ,&p);
+    OutTree -> Branch("nu"          ,"TLorentzVector"       ,&nu);
+    OutTree -> Branch("n"           ,"TLorentzVector"       ,&n);
+    OutTree -> Branch("nu_INnRF"    ,"TLorentzVector"       ,&nu_INnRF);    // nu in neutron RestFrame
+    OutTree -> Branch("W"           ,"TLorentzVector"       ,&W);
+    OutTree -> Branch("mu"          ,"TLorentzVector"       ,&mu);
+    OutTree -> Branch("p"           ,"TLorentzVector"       ,&p);
+    OutTree -> Branch("Ev_INnRF"    ,&Ev_INnRF              ,"Ev_INnRF/D"); // nu energy in neutron RestFrame
+    OutTree -> Branch("XsecWeight"  ,&XsecWeight            ,"XsecWeight/D");    // cross section weight
     
     std::cout << "Initialized Output Tree EnuNCC on " << OutTree -> GetTitle() << std::endl;
     
 }
 
 
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::RunInteractions ( TString NuclearModel , int Ninteractions , bool DoPrint ){
+    for ( int i = 0 ; i < Ninteractions ; i++ ) {
+        if (i%(Ninteractions/20)==0) plot.PrintPercentStr((float)i/Ninteractions);
+
+        GenerateNeutrino();
+        GenerateNeutron( NuclearModel );
+        CalcRestFrameEv();
+        if(DoPrint) PrintDATA(i);
+        OutTree -> Fill();
+    }
+}
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::GenerateNeutrino(){
+    Ev = hEflux -> GetRandom();
+    nu = TLorentzVector( 0 , 0 , Ev , Ev );
+}
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::GenerateNeutron( TString NuclearModel ){
+    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ; // also scale to GeV/c
+    rand.Sphere(Px,Py,Pz,Pn);
+    En = sqrt( Pn*Pn + Mn*Mn );
+    n = TLorentzVector( Px , Py , Pz , En );
+}
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::CalcRestFrameEv(){
+    nu_INnRF = nu;    // neutrino in neutron rest frame
+    nu_INnRF.Boost(n.BoostVector());
+    Ev_INnRF = nu_INnRF.E();
+    XsecWeight = gXsecE -> Eval ( Ev_INnRF ); // spline interpolation between points
+}
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::PrintDATA(int entry){
+    SHOW(entry);
+    SHOWTLorentzVector(nu);
+    SHOWTLorentzVector(n);
+    SHOWTLorentzVector(nu_INnRF);
+    SHOW(Ev);
+    SHOW(Ev_INnRF);
+    SHOW(XsecWeight);
+    PrintLine();
+}
 
 
 

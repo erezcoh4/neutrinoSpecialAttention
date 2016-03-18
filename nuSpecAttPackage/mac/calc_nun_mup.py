@@ -1,30 +1,34 @@
 import ROOT
 from ROOT import EnuNCC
-
 from rootpy.interactive import wait
 
-
-OutFile = ROOT.TFile("$UBOONE/SpecialAttention/AnaFiles/CCinteractions.root","recreate")
-OutTree = ROOT.TTree("anaTree","Event genation for neutrino on neutron QE interaction")
+Ninteractions = 1000
+NModel = "CFG"
+DoDraw = False
+Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
+OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+".root","recreate")
+OutTree = ROOT.TTree("anaTree","EG for nu-n QE interaction" + "("+NModel + ")")
 
 
 nuNCC   = EnuNCC( OutTree )
 
-nuNCC.ImpXsecGraph("/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Xsec.dat" , 70 , False )    # neutrino - n cross section by A. Schukraft
+nuNCC.ImpXsecGraph("/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Xsec.dat" , 70 , DoDraw )    # neutrino - n cross section by A. Schukraft
+print 'generated Xsec'
+if (DoDraw) : wait()
 
-nuNCC.ImpMomentumDist( False )    # neutron momentum distribution
+nuNCC.ImpMomentumDist( DoDraw )    # neutron momentum distribution
+print 'generated MomentumDist'
+if (DoDraw) : wait()
 
-nuNCC.ImpEflux( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 70 ,  True )    # neutron momentum distribution
+nuNCC.ImpEflux( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 70 ,  DoDraw )    # neutron momentum distribution
+print 'generated Eflux'
+if (DoDraw) : wait()
 
-wait()
-#nuNCC.SetMomentumDist() # get neutron momentum distribution
-#nuNCC.SetNuflux()      # get neutrino energy flux
-#
-#nuNCC.RunInteractions( 100 )       # run interactions and fill output tree
+nuNCC.RunInteractions( NModel , Ninteractions , True )       # run interactions and fill output tree
 
 
 
-print "done filling %d events" % OutTree.GetEntries()
+print "done filling %d events " % OutTree.GetEntries() + "of " + NModel
 
 OutTree.Write()
 OutFile.Close()

@@ -29,16 +29,20 @@ class EnuNCC{
 
 public:
     
-    
-    TTree   * OutTree;
-    TGraph  * gXsec , * gXsecE  , * gEflux;
-    TH1F    * hFG   ,  * hCFG   , * hEflux;
     TPlots    plot;
     TAnalysis analysis;
     TRandom3  rand;
     
-    Float_t CMenergy    , XsecWeight;
-    TLorentzVector  nu  , n , W , mu , p;
+    TTree   * OutTree;
+    TGraph  * gXsec , * gXsecE  , * gEflux;
+    TH1F    * hFG   ,  * hCFG   , * hEflux;
+    
+
+    Double_t Ev          , Pn            , Px       , Py    , Pz    , En;
+    Double_t CMenergy    , XsecWeight    , Ev_INnRF ;
+    
+    
+    TLorentzVector  nu  , n  , nu_INnRF , W , mu , p;
     
     
     /// Default constructor
@@ -84,9 +88,12 @@ public:
     
     
     
-//    // interactions
-//    void   RunInteractions ( int Ninteractions = 100 );
-    
+    // interactions
+    void       RunInteractions ( TString Nmodel = "CFG" , int Ninteractions = 1 , bool DoPrint = false );
+    void      GenerateNeutrino ();
+    void       GenerateNeutron (TString Nmodel = "CFG");
+    void       CalcRestFrameEv ();
+    void             PrintDATA (int);
     
 
     
