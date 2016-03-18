@@ -124,10 +124,14 @@ void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
     //    analysis.ReadGraphFromFile( EfluxFileName, Npoints, Ev, flux );
     //    TGraph * g = new TGraph( Npoints , Ev, flux  );
     //    SetEflux( g );
-    
-    hEflux = new TH1F("hEflux" , "neutrino energy flux - very simplified Gaussian" , 100 , 0 , 2 );
-    for (int i = 0; i < 1e4; i++) {
-        hEflux -> Fill(rand.Gaus(0.7 , 0.5));
+    int Nbins = 50;
+    float bin_content;
+    hEflux = new TH1F("hEflux" , "neutrino energy flux - very simplified Gaussian" , Nbins , 0 , 2 );
+    for (int bin = 0; bin < Nbins; bin++) {
+        //        hEflux -> Fill(rand.Gaus(0.7 , 0.5));
+        Ev = hEflux -> GetXaxis() -> GetBinCenter( bin );
+        bin_content = (0.3 < Ev && Ev < 1.) ? 1 : 0 ;
+        hEflux -> SetBinContent( bin , bin_content );
     }
     
     if(DoPlot) DrawEflux();
@@ -141,7 +145,7 @@ void EnuNCC::DrawEflux(){
     //    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
     //    gEflux -> Draw("apc");
     plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-    hEflux -> Draw();
+    hEflux -> Draw("hist");
     c -> SaveAs("~/Desktop/Eflux.pdf");
 }
 
@@ -203,9 +207,10 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::CalcRestFrameEv(){
     nu_INnRF = nu;    // neutrino in neutron rest frame
-    nu_INnRF.Boost(n.BoostVector());
+    nu_INnRF.Boost( -n.BoostVector() );
     Ev_INnRF = nu_INnRF.E();
     XsecWeight = gXsecE -> Eval ( Ev_INnRF ); // spline interpolation between points
+//    XsecWeight = gXsecE -> Eval ( Ev );
 }
 
 
