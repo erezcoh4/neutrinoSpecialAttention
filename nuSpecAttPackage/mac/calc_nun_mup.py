@@ -1,6 +1,7 @@
 import ROOT
 from ROOT import EnuNCC
 
+from rootpy.interactive import wait
 
 
 OutFile = ROOT.TFile("$UBOONE/SpecialAttention/AnaFiles/CCinteractions.root","recreate")
@@ -15,7 +16,7 @@ nuNCC.ImpMomentumDist( False )    # neutron momentum distribution
 
 nuNCC.ImpEflux( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 70 ,  True )    # neutron momentum distribution
 
-
+wait()
 #nuNCC.SetMomentumDist() # get neutron momentum distribution
 #nuNCC.SetNuflux()      # get neutrino energy flux
 #
