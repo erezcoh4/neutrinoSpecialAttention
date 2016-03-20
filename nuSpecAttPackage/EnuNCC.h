@@ -36,10 +36,12 @@ public:
     TTree   * OutTree;
     TGraph  * gXsec , * gXsecE  , * gEflux;
     TH1F    * hFG   ,  * hCFG   , * hEflux;
+    TF1     * SRCk4Tail;
     
-
+    bool nInSRC;
+    
     Double_t Ev          , Pn            , Px       , Py    , Pz    , En;
-    Double_t CMenergy    , XsecWeight    , Ev_INnRF ;
+    Double_t CMenergy    , XsecWeight    , Ev_INnRF , XsecLabFrame ;
     
     
     TLorentzVector  nu  , n  , nu_INnRF , W , mu , p;

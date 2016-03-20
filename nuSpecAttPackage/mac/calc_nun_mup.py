@@ -4,10 +4,10 @@ from rootpy.interactive import wait
 
 Ninteractions = 100000
 NModel = "CFG"
-DoDraw = True
+DoDraw = False
 Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
 OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+".root","recreate")
-OutTree = ROOT.TTree("anaTree","EG for nu-n QE interaction" + "("+NModel + ")")
+OutTree = ROOT.TTree("anaTree","sEG for nu-n QE interaction" + "("+NModel + ")")
 
 
 nuNCC   = EnuNCC( OutTree )
@@ -24,7 +24,8 @@ nuNCC.ImpEflux( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat
 print 'generated Eflux'
 if (DoDraw) : wait()
 
-nuNCC.RunInteractions( NModel , Ninteractions , False )       # run interactions and fill output tree
+
+nuNCC.RunInteractions( NModel , Ninteractions , True )       # run interactions and fill output tree
 
 
 

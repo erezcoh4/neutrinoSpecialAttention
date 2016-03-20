@@ -30,26 +30,6 @@ void EnuNCC::ImpXsecGraph ( TString XsecFileName , const int Npoints , bool DoPl
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::DrawXsecGraph(){
-    
-    TCanvas * c = plot.CreateCanvas("Xsec","Divide",2,1);
-
-    c -> cd(1);
-    plot.SetFrame(gXsec,"#nu - n CCQE Xsec, NUANCE generator assuming M(A) = 1.0 GeV","E#nu [GeV]","#sigma/E#nu [10^{-38} cm^{2} / GeV]");
-    gXsec -> Draw("apc");
-
-    c -> cd(2);
-    plot.SetFrame(gXsecE,"#nu - n CCQE Xsec, NUANCE generator assuming M(A) = 1.0 GeV","E#nu [GeV]","#sigma [10^{-38} cm^{2}]");
-    gXsecE -> Draw("apc");
-
-    float w = 800 , h = 600;
-    c -> SetCanvasSize(w,h);
-    c -> SetWindowSize(w + (w - c->GetWw()), h + (h - c->GetWh()));
-    c -> SaveAs("~/Desktop/Xsec.pdf");
-}
-
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::ImpMomentumDist(bool DoPlot){
     // implement momentum distributions: Fermi Gas (FG) and Correlated Fermi Gas (CFG) 
     
@@ -63,7 +43,7 @@ void EnuNCC::ImpMomentumDist(bool DoPlot){
     Double_t    lambda = 2.75 ;// +/- 0.25 high-momentum cutoff
     Double_t       pi2 = pow(TMath::Pi(),2);
     Double_t        A0 = (3 * pi2 / pow(k_F0,3)) * (1./rho2rho0) * (1 - (1 - (1./lambda)*pow(rho2rho0,1./3.)) * (c0 / pi2 ));
-    TF1         * tail = new TF1("tail",Form("%f*%f/(x**4)",c0,k_F),k_F,lambda*k_F0);
+    SRCk4Tail          = new TF1("tail",Form("%f*%f/(x**4)",c0,k_F),k_F,lambda*k_F0);
 
     int Nbins = 100;
     float bin_content , k;
@@ -81,7 +61,7 @@ void EnuNCC::ImpMomentumDist(bool DoPlot){
     hCFG = new TH1F("hCFG" , "Correlated Fermi Gas momentum dist." , Nbins , 0 , lambda*k_F0 );
     for (int bin = 0; bin < Nbins ; bin++){
         k = hCFG -> GetXaxis() -> GetBinCenter( bin );
-        bin_content = ( k < k_F ) ? A0 : tail -> Eval(k);
+        bin_content = ( k < k_F ) ? A0 : SRCk4Tail -> Eval(k);
         hCFG -> SetBinContent( bin , bin_content );
     }
     
@@ -100,22 +80,6 @@ void EnuNCC::ImpMomentumDist(bool DoPlot){
 
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::DrawMomentumDist(){
-    
-    TCanvas * c = plot.CreateCanvas("MomentumDist","Divide",2,1);
-    
-    c -> cd(1);
-    plot.SetFrame(hFG,"n momentum dist. - Fermi Gas","neutron momentum [GeV/c]","#rho [a.u.]",1,46);
-    hFG -> Draw();
-    
-    c -> cd(2);
-    plot.SetFrame(hCFG,"n momentum dist. - Correlated Fermi Gas","neutron momentum [GeV/c]","#rho [a.u.]", 1,46);
-    hCFG -> Draw();
-    
-    c -> SaveAs("~/Desktop/MomentumDist.pdf");
-}
-
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
@@ -130,25 +94,12 @@ void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
     for (int bin = 0; bin < Nbins; bin++) {
         //        hEflux -> Fill(rand.Gaus(0.7 , 0.5));
         Ev = hEflux -> GetXaxis() -> GetBinCenter( bin );
-        bin_content = (0.3 < Ev && Ev < 1.) ? 1 : 0 ;
+        bin_content = (0.2 < Ev && Ev < 0.4) ? 1 : 0 ;
         hEflux -> SetBinContent( bin , bin_content );
     }
     
     if(DoPlot) DrawEflux();
 }
-
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::DrawEflux(){
-    
-    TCanvas * c = plot.CreateCanvas("Eflux");
-    //    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-    //    gEflux -> Draw("apc");
-    plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-    hEflux -> Draw("hist");
-    c -> SaveAs("~/Desktop/Eflux.pdf");
-}
-
 
 
 
@@ -163,6 +114,8 @@ void EnuNCC::InitOutTree(){
     OutTree -> Branch("p"           ,"TLorentzVector"       ,&p);
     OutTree -> Branch("Ev_INnRF"    ,&Ev_INnRF              ,"Ev_INnRF/D"); // nu energy in neutron RestFrame
     OutTree -> Branch("XsecWeight"  ,&XsecWeight            ,"XsecWeight/D");    // cross section weight
+    OutTree -> Branch("XsecLabFrame",&XsecLabFrame          ,"XsecLabFrame/D");
+    
     
     std::cout << "Initialized Output Tree EnuNCC on " << OutTree -> GetTitle() << std::endl;
     
@@ -196,8 +149,33 @@ void EnuNCC::GenerateNeutrino(){
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::GenerateNeutron( TString NuclearModel ){
-    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ; // also scale to GeV/c
+    nInSRC = (rand.Uniform() < 0.20) ? true : false;
+    //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
+    if (!nInSRC){
+        Pn = rand.Uniform(0,0.25);
+    }
+    else if (nInSRC){
+        Pn = SRCk4Tail -> GetRandom() / 1000;
+    }
+//    Pn = rand.Uniform(0,1);
+
     rand.Sphere(Px,Py,Pz,Pn);
+    //    int i = (int) (3 * rand.Uniform()) ;
+    //    switch (i) {
+    //        case 1:
+    //            Pn = 0.4;
+    //            break;
+    //        case 2:
+    //            Pn = -0.4;
+    //            break;
+    //
+    //        default:
+    //            Pn = 0.0;
+    //            break;
+    //    }
+    //    n = TLorentzVector( 0 , 0 , Pn , En );
+
+    
     En = sqrt( Pn*Pn + Mn*Mn );
     n = TLorentzVector( Px , Py , Pz , En );
 }
@@ -210,7 +188,7 @@ void EnuNCC::CalcRestFrameEv(){
     nu_INnRF.Boost( -n.BoostVector() );
     Ev_INnRF = nu_INnRF.E();
     XsecWeight = gXsecE -> Eval ( Ev_INnRF ); // spline interpolation between points
-//    XsecWeight = gXsecE -> Eval ( Ev );
+    XsecLabFrame = gXsecE -> Eval ( Ev );
 }
 
 
@@ -222,9 +200,61 @@ void EnuNCC::PrintDATA(int entry){
     SHOWTLorentzVector(nu_INnRF);
     SHOW(Ev);
     SHOW(Ev_INnRF);
+    SHOW((Ev-Ev_INnRF)/Ev);
     SHOW(XsecWeight);
+    SHOW(XsecLabFrame);
+    SHOW(XsecWeight/XsecLabFrame);
     PrintLine();
 }
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::DrawXsecGraph(){
+    
+    TCanvas * c = plot.CreateCanvas("Xsec","Divide",2,1);
+    
+    c -> cd(1);
+    plot.SetFrame(gXsec,"#nu - n CCQE Xsec, NUANCE generator assuming M(A) = 1.0 GeV","E#nu [GeV]","#sigma/E#nu [10^{-38} cm^{2} / GeV]");
+    gXsec -> Draw("apc");
+    
+    c -> cd(2);
+    plot.SetFrame(gXsecE,"#nu - n CCQE Xsec, NUANCE generator assuming M(A) = 1.0 GeV","E#nu [GeV]","#sigma [10^{-38} cm^{2}]");
+    gXsecE -> Draw("apc");
+    
+    float w = 800 , h = 600;
+    c -> SetCanvasSize(w,h);
+    c -> SetWindowSize(w + (w - c->GetWw()), h + (h - c->GetWh()));
+    c -> SaveAs("~/Desktop/Xsec.pdf");
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::DrawEflux(){
+    
+    TCanvas * c = plot.CreateCanvas("Eflux");
+    //    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
+    //    gEflux -> Draw("apc");
+    plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
+    hEflux -> Draw("hist");
+    c -> SaveAs("~/Desktop/Eflux.pdf");
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::DrawMomentumDist(){
+    
+    TCanvas * c = plot.CreateCanvas("MomentumDist","Divide",2,1);
+    
+    c -> cd(1);
+    plot.SetFrame(hFG,"n momentum dist. - Fermi Gas","neutron momentum [GeV/c]","#rho [a.u.]",1,46);
+    hFG -> Draw();
+    
+    c -> cd(2);
+    plot.SetFrame(hCFG,"n momentum dist. - Correlated Fermi Gas","neutron momentum [GeV/c]","#rho [a.u.]", 1,46);
+    hCFG -> Draw();
+    
+    c -> SaveAs("~/Desktop/MomentumDist.pdf");
+}
+
 
 
 
