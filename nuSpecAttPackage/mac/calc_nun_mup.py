@@ -3,7 +3,7 @@ from ROOT import EnuNCC
 from rootpy.interactive import wait
 
 Ninteractions = 100000
-NModel = "CFG"
+NModel = "CFGnBack"
 DoDraw = False
 Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
 OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+".root","recreate")
@@ -25,7 +25,7 @@ print 'generated Eflux'
 if (DoDraw) : wait()
 
 
-nuNCC.RunInteractions( NModel , Ninteractions , True )       # run interactions and fill output tree
+nuNCC.RunInteractions( NModel , Ninteractions , False )       # run interactions and fill output tree
 
 
 

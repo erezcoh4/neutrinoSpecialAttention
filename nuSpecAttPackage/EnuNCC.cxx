@@ -149,35 +149,60 @@ void EnuNCC::GenerateNeutrino(){
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::GenerateNeutron( TString NuclearModel ){
-    nInSRC = (rand.Uniform() < 0.20) ? true : false;
-    //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
-    if (!nInSRC){
-        Pn = rand.Uniform(0,0.25);
-    }
-    else if (nInSRC){
-        Pn = SRCk4Tail -> GetRandom() / 1000;
-    }
-//    Pn = rand.Uniform(0,1);
-
-    rand.Sphere(Px,Py,Pz,Pn);
-    //    int i = (int) (3 * rand.Uniform()) ;
-    //    switch (i) {
-    //        case 1:
-    //            Pn = 0.4;
-    //            break;
-    //        case 2:
-    //            Pn = -0.4;
-    //            break;
-    //
-    //        default:
-    //            Pn = 0.0;
-    //            break;
-    //    }
-    //    n = TLorentzVector( 0 , 0 , Pn , En );
 
     
-    En = sqrt( Pn*Pn + Mn*Mn );
-    n = TLorentzVector( Px , Py , Pz , En );
+    if (NuclearModel == "nUniform") {
+        Pn = rand.Uniform(0,1);
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , Pz , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+
+    
+    else if (NuclearModel == "nBack") {
+        Pn = rand.Uniform(0,1);
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , -fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+
+    else if (NuclearModel == "CFG") {
+        nInSRC = (rand.Uniform() < 0.20) ? true : false;
+        //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
+        if (!nInSRC)
+        Pn = rand.Uniform(0,0.25);
+        else if (nInSRC)
+        Pn = SRCk4Tail -> GetRandom() / 1000;
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , Pz , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+    
+    else if (NuclearModel == "CFGnBack") {
+        nInSRC = (rand.Uniform() < 0.20) ? true : false;
+        //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
+        if (!nInSRC)
+        Pn = rand.Uniform(0,0.25);
+        else if (nInSRC)
+        Pn = SRCk4Tail -> GetRandom() / 1000;
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , -fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+    
+    else if (NuclearModel == "nParallelAntiparallel") {
+        int i = (int) (3 * rand.Uniform()) ;
+        switch (i) {
+            case 1:
+                Pn = 0.4;
+                break;
+            case 2:
+                Pn = -0.4;
+                break;
+            default:
+                Pn = 0.0;
+                break;
+        }
+        n = TLorentzVector( 0 , 0 , Pn , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+
+    
 }
 
 
