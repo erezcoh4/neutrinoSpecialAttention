@@ -3,7 +3,9 @@ from ROOT import EnuNCC
 from rootpy.interactive import wait
 
 Ninteractions = 100000
-NModel = "CFGnBack"
+#NModel = "CFGnBack"
+NModel = "CFGnForward"
+
 DoDraw = False
 Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
 OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+".root","recreate")
@@ -20,7 +22,7 @@ nuNCC.ImpMomentumDist( DoDraw )    # neutron momentum distribution
 print 'generated MomentumDist'
 if (DoDraw) : wait()
 
-nuNCC.ImpEflux( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 70 ,  DoDraw )    # neutron momentum distribution
+nuNCC.ImpEfluxGraph( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 166 ,  DoDraw )    # BNB energy flux at uboone
 print 'generated Eflux'
 if (DoDraw) : wait()
 

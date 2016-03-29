@@ -82,25 +82,24 @@ void EnuNCC::ImpMomentumDist(bool DoPlot){
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::ImpEflux( TString EfluxFileName , const int Npoints , bool DoPlot){
+void EnuNCC::ImpEfluxGraph ( TString EfluxFileName , const int Npoints , bool DoPlot){
     
-    //    double Ev[Npoints] , flux[Npoints];
-    //    analysis.ReadGraphFromFile( EfluxFileName, Npoints, Ev, flux );
-    //    TGraph * g = new TGraph( Npoints , Ev, flux  );
-    //    SetEflux( g );
-    int Nbins = 50;
-    float bin_content;
-    hEflux = new TH1F("hEflux" , "neutrino energy flux - very simplified Gaussian" , Nbins , 0 , 2 );
-    for (int bin = 0; bin < Nbins; bin++) {
-        //        hEflux -> Fill(rand.Gaus(0.7 , 0.5));
-        Ev = hEflux -> GetXaxis() -> GetBinCenter( bin );
-        bin_content = (0.2 < Ev && Ev < 0.4) ? 1 : 0 ;
-        hEflux -> SetBinContent( bin , bin_content );
-    }
+    double Ev[Npoints] , flux_Units[Npoints], flux[Npoints];
+    analysis.ReadGraphFromFile( EfluxFileName, Npoints, Ev, flux_Units );
+    TGraph * g_Units = new TGraph( Npoints , Ev, flux_Units  );
+    SetEfluxGraph( g_Units );
     
-    if(DoPlot) DrawEflux();
+    
+    for (int i = 0; i < Npoints; i++)
+        flux[i] = flux_Units[i] ;
+    TGraph * gE = new TGraph( Npoints , Ev , flux  );
+    SetEfluxEGraph( gE );
+    hEflux = new TH1F("hEflux" , "neutrino energy flux" , 100 , 0 , gEfluxE->GetXaxis()->GetXmax() );
+    for (int bin = 0; bin < 100; bin++)
+        hEflux -> SetBinContent( bin , gE -> Eval( hEflux->GetXaxis()->GetBinCenter(bin) ) );
+    
+    if(DoPlot) DrawEfluxGraph();
 }
-
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -112,6 +111,7 @@ void EnuNCC::InitOutTree(){
     OutTree -> Branch("W"           ,"TLorentzVector"       ,&W);
     OutTree -> Branch("mu"          ,"TLorentzVector"       ,&mu);
     OutTree -> Branch("p"           ,"TLorentzVector"       ,&p);
+    OutTree -> Branch("Pcm"         ,"TVector3"             ,&Pcm);
     OutTree -> Branch("Ev_INnRF"    ,&Ev_INnRF              ,"Ev_INnRF/D"); // nu energy in neutron RestFrame
     OutTree -> Branch("XsecWeight"  ,&XsecWeight            ,"XsecWeight/D");    // cross section weight
     OutTree -> Branch("XsecLabFrame",&XsecLabFrame          ,"XsecLabFrame/D");
@@ -133,6 +133,7 @@ void EnuNCC::RunInteractions ( TString NuclearModel , int Ninteractions , bool D
         GenerateNeutrino();
         GenerateNeutron( NuclearModel );
         CalcRestFrameEv();
+        GenerateRecoilProton( 0.0 , 0.14 );
         if(DoPrint) PrintDATA(i);
         OutTree -> Fill();
     }
@@ -142,6 +143,7 @@ void EnuNCC::RunInteractions ( TString NuclearModel , int Ninteractions , bool D
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::GenerateNeutrino(){
     Ev = hEflux -> GetRandom();
+//    Ev = gEfluxE -> GetRandom();
     nu = TLorentzVector( 0 , 0 , Ev , Ev );
 }
 
@@ -163,6 +165,12 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
         rand.Sphere(Px,Py,Pz,Pn);
         n = TLorentzVector( Px , Py , -fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
     }
+    
+    else if (NuclearModel == "nForward") {
+        Pn = rand.Uniform(0,1);
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
+    }
 
     else if (NuclearModel == "CFG") {
         nInSRC = (rand.Uniform() < 0.20) ? true : false;
@@ -177,13 +185,22 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
     
     else if (NuclearModel == "CFGnBack") {
         nInSRC = (rand.Uniform() < 0.20) ? true : false;
-        //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
         if (!nInSRC)
-        Pn = rand.Uniform(0,0.25);
+            Pn = rand.Uniform(0,0.25);
         else if (nInSRC)
-        Pn = SRCk4Tail -> GetRandom() / 1000;
+            Pn = SRCk4Tail -> GetRandom() / 1000;
         rand.Sphere(Px,Py,Pz,Pn);
         n = TLorentzVector( Px , Py , -fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
+    }
+    
+    else if (NuclearModel == "CFGnForward") {
+        nInSRC = (rand.Uniform() < 0.20) ? true : false;
+        if (!nInSRC)
+            Pn = rand.Uniform(0,0.25);
+        else if (nInSRC)
+            Pn = SRCk4Tail -> GetRandom() / 1000;
+        rand.Sphere(Px,Py,Pz,Pn);
+        n = TLorentzVector( Px , Py , fabs(Pz) , sqrt( Pn*Pn + Mn*Mn ) );
     }
     
     else if (NuclearModel == "nParallelAntiparallel") {
@@ -203,6 +220,14 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
     }
 
     
+}
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::GenerateRecoilProton( float mean , float sigma ){
+    Pcm = TVector3( rand.Gaus( mean , sigma ) , rand.Gaus( mean , sigma ) , rand.Gaus( mean , sigma ) );
+    p.SetVectM( Pcm - n.Vect()  , Mp );
 }
 
 
@@ -247,20 +272,24 @@ void EnuNCC::DrawXsecGraph(){
     plot.SetFrame(gXsecE,"#nu - n CCQE Xsec, NUANCE generator assuming M(A) = 1.0 GeV","E#nu [GeV]","#sigma [10^{-38} cm^{2}]");
     gXsecE -> Draw("apc");
     
-    float w = 800 , h = 600;
-    c -> SetCanvasSize(w,h);
-    c -> SetWindowSize(w + (w - c->GetWw()), h + (h - c->GetWh()));
     c -> SaveAs("~/Desktop/Xsec.pdf");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::DrawEflux(){
+void EnuNCC::DrawEfluxGraph(){
     
-    TCanvas * c = plot.CreateCanvas("Eflux");
-    //    plot.SetFrame(gEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-    //    gEflux -> Draw("apc");
-    plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]");
-    hEflux -> Draw("hist");
+    TCanvas * c = plot.CreateCanvas("Xsec","Divide",2,1);
+    
+    c -> cd(1);
+    plot.SetFrame(gEflux,"#nu - flux","E#nu [GeV]","#phi / 50 MeV / m ^{2} / 10 ^{6} POT");
+    gEflux -> Draw("ap");
+    
+    c -> cd(2);
+    plot.SetFrame(gEfluxE,"#nu - flux","E#nu [GeV]","flux [a.u.]");
+    gEfluxE -> Draw("ap");
+    plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]",4,38);
+    hEflux -> Draw("same HIST");
+
     c -> SaveAs("~/Desktop/Eflux.pdf");
 }
 

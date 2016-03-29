@@ -34,7 +34,7 @@ public:
     TRandom3  rand;
     
     TTree   * OutTree;
-    TGraph  * gXsec , * gXsecE  , * gEflux;
+    TGraph  * gXsec , * gXsecE  , * gEflux, * gEfluxE;
     TH1F    * hFG   ,  * hCFG   , * hEflux;
     TF1     * SRCk4Tail;
     
@@ -44,6 +44,8 @@ public:
     Double_t CMenergy    , XsecWeight    , Ev_INnRF , XsecLabFrame ;
     
     
+    
+    TVector3        Pcm ; // c.m. motion of the pair
     TLorentzVector  nu  , n  , nu_INnRF , W , mu , p;
     
     
@@ -65,8 +67,8 @@ public:
     void  DrawMomentumDist ();
     
     
-    void          ImpEflux ( TString , int ,bool DoPlot = false );
-    void         DrawEflux ();
+    void     ImpEfluxGraph ( TString , int ,bool DoPlot = false );
+    void    DrawEfluxGraph ();
     
     
     // output
@@ -84,7 +86,8 @@ public:
     void            SetOutTree ( TTree * fOutTree ) {OutTree = fOutTree;};
     void          SetXsecGraph ( TGraph * g )       {gXsec = g;};
     void         SetXsecEGraph ( TGraph * g )       {gXsecE = g;};
-    void              SetEflux ( TGraph * g )       {gEflux = g;};
+    void         SetEfluxGraph ( TGraph * g )       {gEflux = g;};
+    void        SetEfluxEGraph ( TGraph * g )       {gEfluxE = g;};
     void     SetMomentumDistFG ( TH1F * h )         {hFG = h;};
     void    SetMomentumDistCFG ( TH1F * h )         {hCFG = h;};
     
@@ -95,6 +98,9 @@ public:
     void      GenerateNeutrino ();
     void       GenerateNeutron (TString Nmodel = "CFG");
     void       CalcRestFrameEv ();
+    void  GenerateRecoilProton ( float mean = 0.0 , float sigma = 0.0 );
+
+    
     void             PrintDATA (int);
     
 
