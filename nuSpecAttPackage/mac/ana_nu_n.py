@@ -255,7 +255,8 @@ if DoMomentumDist:
     hTailFBasymWtd_p.Draw("")
     hTailFBasymGen_p.Draw("same")
 
-
+    cMomentumDist.cd(9)
+    anaBack.H1("nu.E()",cutGen,"HIST",Nbins,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
 
     cMomentumDist.Update()
     wait()

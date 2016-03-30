@@ -94,8 +94,8 @@ public:
     
     
     // interactions
-    void       RunInteractions ( TString Nmodel = "CFG" , int Ninteractions = 1 , bool DoPrint = false );
-    void      GenerateNeutrino ();
+    void       RunInteractions ( TString Nmodel = "CFG" ,  TString nuFlux  = "BNB flux" , int Ninteractions = 1 , bool DoPrint = false );
+    void      GenerateNeutrino ( TString nuFlux = "BNB flux" );
     void       GenerateNeutron (TString Nmodel = "CFG");
     void       CalcRestFrameEv ();
     void  GenerateRecoilProton ( float mean = 0.0 , float sigma = 0.0 );

@@ -126,11 +126,11 @@ void EnuNCC::InitOutTree(){
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::RunInteractions ( TString NuclearModel , int Ninteractions , bool DoPrint ){
+void EnuNCC::RunInteractions ( TString NuclearModel , TString nuFlux , int Ninteractions , bool DoPrint ){
     for ( int i = 0 ; i < Ninteractions ; i++ ) {
         if (i%(Ninteractions/20)==0) plot.PrintPercentStr((float)i/Ninteractions);
 
-        GenerateNeutrino();
+        GenerateNeutrino( nuFlux );
         GenerateNeutron( NuclearModel );
         CalcRestFrameEv();
         GenerateRecoilProton( 0.0 , 0.14 );
@@ -141,9 +141,13 @@ void EnuNCC::RunInteractions ( TString NuclearModel , int Ninteractions , bool D
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EnuNCC::GenerateNeutrino(){
-    Ev = hEflux -> GetRandom();
-//    Ev = gEfluxE -> GetRandom();
+void EnuNCC::GenerateNeutrino( TString nuFlux ){
+    if (nuFlux == "BNB flux") {
+        Ev = hEflux -> GetRandom();
+    }
+    else if (nuFlux == "monochromatic neutrino 300 MeV"){
+        Ev = 0.3;
+    }
     nu = TLorentzVector( 0 , 0 , Ev , Ev );
 }
 
