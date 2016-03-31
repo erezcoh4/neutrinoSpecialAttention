@@ -67,6 +67,7 @@ public:
     void  DrawMomentumDist ();
     
     
+    void     ImpEfluxHisto ( TH1F* ,bool DoPlot = false  );
     void     ImpEfluxGraph ( TString , int ,bool DoPlot = false );
     void    DrawEfluxGraph ();
     

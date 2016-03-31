@@ -21,10 +21,12 @@ kF              = 0.25
 #NModel = "CFG"
 #NModel = "CFGnBack"
 NModel = "CFGnForward"
+PpPmuCut = 800
+nuFlux = "mcc6 |p(p)|+|p(mu)|<%d" % PpPmuCut
 
 #ana = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+NModel+".root" , "anaTree" , NModel )
-anaBack     = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnBack"+".root" , "anaTree" , "CFGnBack" )
-anaForward  = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnForward"+".root" , "anaTree" , "CFGnForward" )
+anaBack     = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnBack"+"_PpPmuCut%d"%PpPmuCut+".root" , "anaTree" , "CFGnBack" )
+anaForward  = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnForward"+"_PpPmuCut%d"%PpPmuCut+".root" , "anaTree" , "CFGnForward" )
 analysis = TAnalysis()
 
 
@@ -256,7 +258,7 @@ if DoMomentumDist:
     hTailFBasymGen_p.Draw("same")
 
     cMomentumDist.cd(9)
-    anaBack.H1("nu.E()",cutGen,"HIST",Nbins,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
+    anaBack.H1("nu.E()",cutGen,"HIST",100,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
 
     cMomentumDist.Update()
     wait()

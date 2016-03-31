@@ -1,16 +1,25 @@
 import ROOT
-from ROOT import EnuNCC
+from ROOT import EnuNCC , TAnalysis
 from rootpy.interactive import wait
 
+# usage: run with some PpPmCut (400/600/800) which is a cut on mcc6 events for |p(p)|+|p(mu)| in order to constrain the Ev
+# run nBack and then nForward, and then use ana_nu_n.py to compare them and look at the asymmetry
+
+analysis = TAnalysis()
 Ninteractions = 100000
-#NModel = "CFGnBack"
-NModel = "CFGnForward"
-nuFlux = "monochromatic neutrino 300 MeV"
+NModel = "CFGnBack"
+#NModel = "CFGnForward"
+#nuFlux = "monochromatic neutrino 300 MeV"
+PpPmuCut = 800
+nuFlux = "mcc6 |p(p)|+|p(mu)|<%d" % PpPmuCut
+hEflux = analysis.GetHistoFromAFile("/Users/erezcohen/Desktop/uBoone/SpecialAttention/Data/MCC6recEventsEv.root", "hEflux_PpPlusPmuBelow%d"% PpPmuCut )
+
+
 
 
 DoDraw = False
 Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
-OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+".root","recreate")
+OutFile = ROOT.TFile(Path+"CCinteractions"+NModel+"_PpPmuCut%d"%PpPmuCut+".root","recreate")
 OutTree = ROOT.TTree("anaTree","sEG for nu-n QE interaction" + "("+NModel + ")" + ", " + nuFlux)
 
 
@@ -24,7 +33,8 @@ nuNCC.ImpMomentumDist( DoDraw )    # neutron momentum distribution
 print 'generated MomentumDist'
 if (DoDraw) : wait()
 
-nuNCC.ImpEfluxGraph( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 166 ,  DoDraw )    # BNB energy flux at uboone
+nuNCC.ImpEfluxHisto( hEflux ,  DoDraw)
+#nuNCC.ImpEfluxGraph( "/Users/erezcohen/Desktop/uboone/SpecialAttention/Data/Eflux.dat" , 166 ,  DoDraw )    # BNB energy flux at uboone
 print 'generated Eflux'
 if (DoDraw) : wait()
 

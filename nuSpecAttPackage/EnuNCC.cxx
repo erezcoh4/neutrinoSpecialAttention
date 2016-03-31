@@ -81,6 +81,16 @@ void EnuNCC::ImpMomentumDist(bool DoPlot){
 }
 
 
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EnuNCC::ImpEfluxHisto ( TH1F * h , bool DoPlot ){
+    hEflux = new TH1F("hEflux" , "neutrino energy flux" , h->GetNbinsX() , 0 , h->GetXaxis()->GetXmax()/1000. );
+    for (int bin = 0 ; bin < h->GetNbinsX(); bin++) {
+        hEflux -> SetBinContent(bin , h->GetBinContent(bin));
+    }
+    if(DoPlot) DrawEfluxGraph();
+}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::ImpEfluxGraph ( TString EfluxFileName , const int Npoints , bool DoPlot){
     
@@ -147,6 +157,9 @@ void EnuNCC::GenerateNeutrino( TString nuFlux ){
     }
     else if (nuFlux == "monochromatic neutrino 300 MeV"){
         Ev = 0.3;
+    }
+    else if (nuFlux == "mcc6 |p(p)|+|p(mu)|<800" || nuFlux == "mcc6 |p(p)|+|p(mu)|<600"  || nuFlux == "mcc6 |p(p)|+|p(mu)|<400" ){
+        Ev = hEflux -> GetRandom();
     }
     nu = TLorentzVector( 0 , 0 , Ev , Ev );
 }
@@ -282,19 +295,26 @@ void EnuNCC::DrawXsecGraph(){
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::DrawEfluxGraph(){
     
-    TCanvas * c = plot.CreateCanvas("Xsec","Divide",2,1);
     
-    c -> cd(1);
-    plot.SetFrame(gEflux,"#nu - flux","E#nu [GeV]","#phi / 50 MeV / m ^{2} / 10 ^{6} POT");
-    gEflux -> Draw("ap");
-    
-    c -> cd(2);
-    plot.SetFrame(gEfluxE,"#nu - flux","E#nu [GeV]","flux [a.u.]");
-    gEfluxE -> Draw("ap");
-    plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]",4,38);
-    hEflux -> Draw("same HIST");
+    if(gEflux && gEfluxE){
+        TCanvas * c = plot.CreateCanvas("Xsec","Divide",2,1);
+        c -> cd(1);
+        plot.SetFrame(gEflux,"#nu - flux","E#nu [GeV]","#phi / 50 MeV / m ^{2} / 10 ^{6} POT");
+        gEflux -> Draw("ap");
+        c -> cd(2);
+        plot.SetFrame(gEfluxE,"#nu - flux","E#nu [GeV]","flux [a.u.]");
+        gEfluxE -> Draw("ap");
+        plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]",4,38);
+        hEflux -> Draw("same HIST");
+        c -> SaveAs("~/Desktop/Eflux.pdf");
+    }
+    else {
+        TCanvas * c = plot.CreateCanvas("Xsec");
+        plot.SetFrame(hEflux,"#nu - flux ","E#nu [GeV]","flux [a.u.]",4,38);
+        hEflux -> Draw("same HIST");
+        c -> SaveAs("~/Desktop/Eflux.pdf");
+    }
 
-    c -> SaveAs("~/Desktop/Eflux.pdf");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
