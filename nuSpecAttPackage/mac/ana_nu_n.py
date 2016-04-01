@@ -21,7 +21,7 @@ kF              = 0.25
 #NModel = "CFG"
 #NModel = "CFGnBack"
 NModel = "CFGnForward"
-PpPmuCut = 800
+PpPmuCut = 400
 nuFlux = "mcc6 |p(p)|+|p(mu)|<%d" % PpPmuCut
 
 #ana = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+NModel+".root" , "anaTree" , NModel )
@@ -237,7 +237,7 @@ if DoMomentumDist:
 
     hTailFBasymWtd.Draw("")
     hTailFBasymGen.Draw("same")
-
+    anaForward.AddLegend("integrated above k_{F}",hTailFBasymGen,"generated (100%%)",hTailFBasymWtd,"weighted (%.1f%%)"%(100.*hTailFBasymWtd.Integral()/hTailFBasymGen.Integral()),"F" )
 
     # recoil proton
     cMomentumDist.cd(8)
@@ -256,6 +256,7 @@ if DoMomentumDist:
 
     hTailFBasymWtd_p.Draw("")
     hTailFBasymGen_p.Draw("same")
+    anaForward.AddLegend("integrated above k_{F}",hTailFBasymGen_p,"generated (100%%)",hTailFBasymWtd_p,"weighted (%.1f%%)"%(100.*hTailFBasymWtd_p.Integral()/hTailFBasymGen_p.Integral()),"F" )
 
     cMomentumDist.cd(9)
     anaBack.H1("nu.E()",cutGen,"HIST",100,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
