@@ -12,23 +12,29 @@ DoMomentumDist  = True
 
 
 cutGen          = ROOT.TCut()
-colorGen        = 1
-colorWeighted   = 2
 cutW            = ROOT.TCut("XsecWeight")
+colorGen        = 1
+colorWtdB       = 2
+colorWtdF       = 4
+colorAsym       = 6
 Nbins           = 25
 kF              = 0.25
 
-#NModel = "CFG"
-#NModel = "CFGnBack"
-NModel = "CFGnForward"
-PpPmuCut = 400
-nuFlux = "mcc6 |p(p)|+|p(mu)|<%d" % PpPmuCut
 
-#ana = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+NModel+".root" , "anaTree" , NModel )
-anaBack     = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnBack"+"_PpPmuCut%d"%PpPmuCut+".root" , "anaTree" , "CFGnBack" )
-anaForward  = TPlots("/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/CCinteractions"+"CFGnForward"+"_PpPmuCut%d"%PpPmuCut+".root" , "anaTree" , "CFGnForward" )
-analysis = TAnalysis()
-
+PpPmuBin    = 4
+PpPmuMin    = [0   , 400 , 600 , 800  , 1000]
+PpPmuMax    = [400 , 600 , 800 , 1000 , 3000]
+hEflux      = []
+anaBack     = []
+anaFrwd     = []
+Path        = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles"
+plot        = TPlots()
+analysis    = TAnalysis()
+for i in range(0,len(PpPmuMin)):
+    hEflux.append(analysis.GetHistoFromAFile("/Users/erezcohen/Desktop/uBoone/SpecialAttention/Data/MCC6recEventsEv.root"
+                                             , "hEflux_%dPpPlusPmu%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))))
+    anaBack.append(TPlots(Path+"/CCinteractionsCFGnBack_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nB%d"%i ))
+    anaFrwd.append(TPlots(Path+"/CCinteractionsCFGnForward_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nF%d"%i ))
 
 
 if DoAllVariables:
@@ -144,125 +150,103 @@ if DoAsymmetery:
 # March - 29
 if DoMomentumDist:
 
-    cMomentumDist = anaBack.CreateCanvas("n momentum dist.", "Divide" , 3 , 3)
+    anaF    = anaFrwd[PpPmuBin]
+    anaB    = anaBack[PpPmuBin]
+    Nevents = hEflux[PpPmuBin].Integral()
+    
+    cMomentumDist = anaB.CreateCanvas("n momentum dist.", "Divide" , 2 , 3)
     
     cMomentumDist.cd(1)
-    hGen = anaBack.H1("n.P()",cutGen,"HIST",Nbins,0,0.7,"n momentum dist. (" + NModel + ")","n momentum [GeV/c]","",colorGen,colorGen)
-    hWtd = anaBack.H1("n.P()",cutW,"HIST same",Nbins,0,0.7,"","","",colorWeighted,colorWeighted)
-    
-    
-    TailGen = 100 * hGen.Integral(hGen.GetXaxis().FindBin(0.26),hGen.GetNbinsX()) / hGen.Integral()
-    TailWtd = 100 * hWtd.Integral(hWtd.GetXaxis().FindBin(0.26),hWtd.GetNbinsX()) / hWtd.Integral()
+    anaB.H1("nu.E()",cutGen,"HIST",100,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
 
-    kF_bin = hGen.GetXaxis().FindBin(0.25)
+#    cMomentumDist.cd(2)
+    hGen_n  = anaB.H1("n.P()",cutGen,"goff",Nbins,0,0.7,"n momentum dist.","n momentum [GeV/c]","",colorGen,colorGen)
+    hWtdB_n = anaB.H1("n.P()",cutW,"goff",Nbins,0,0.7,"","","",colorWtdB,colorWtdB)
+    hWtdF_n = anaF.H1("n.P()",cutW,"goff",Nbins,0,0.7,"","","",colorWtdF,colorWtdF)
+    hGen_p  = anaB.H1("p.P()",cutGen,"goff",Nbins,0,0.7,"p momentum dist.","p momentum [GeV/c]","",colorGen,colorGen)
+    hWtdB_p = anaB.H1("p.P()",cutW,"goff",Nbins,0,0.7,"","","",colorWtdB,colorWtdB)
+    hWtdF_p = anaF.H1("p.P()",cutW,"goff",Nbins,0,0.7,"","","",colorWtdF,colorWtdF)
     
-    hTailGen = ROOT.TH1F("hTailGen","",Nbins,0,0.7)
-    anaBack.SetFrame(hTailGen ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events",colorGen,0)
-    hTailWtd = ROOT.TH1F("hTailWtd","",Nbins,0,0.7)
-    anaBack.SetFrame(hTailWtd ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events" ,colorWeighted,0)
-    hTlGn_k4 = ROOT.TH1F("hTlGn_k4","",Nbins,0,0.7)
-    anaBack.SetFrame(hTlGn_k4 ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]",colorGen,0)
-    hTlWd_k4 = ROOT.TH1F("hTlWd_k4","",Nbins,0,0.7)
-    anaBack.SetFrame(hTlWd_k4 ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]" ,colorWeighted,0)
-    hTailRat = ROOT.TH1F("hTailRat","",Nbins,0,0.7)
-    anaBack.SetFrame(hTailRat ,"ratio of increase in tail","n momentum [GeV/c]","% of generated" , 4 , 38)
+    
+    
+    TailGen_n     = 100 * hGen_n.Integral(hGen_n.GetXaxis().FindBin(0.26),hGen_n.GetNbinsX()) / hGen_n.Integral()
+    NTailGen_n  = int(TailGen_n*Nevents/100)
+    TailGen_p     = 100 * hGen_p.Integral(hGen_p.GetXaxis().FindBin(0.26),hGen_p.GetNbinsX()) / hGen_p.Integral()
+    NTailGen_p  = int(TailGen_p*Nevents/100)
+    TailWtdB_n    = 100 * hWtdB_n.Integral(hWtdB_n.GetXaxis().FindBin(0.26),hWtdB_n.GetNbinsX()) / hWtdB_n.Integral()
+    NTailWtdB_n = int(TailWtdB_n*Nevents/100)
+    TailWtdF_n    = 100 * hWtdF_n.Integral(hWtdF_n.GetXaxis().FindBin(0.26),hWtdF_n.GetNbinsX()) / hWtdF_n.Integral()
+    NTailWtdF_n = int(TailWtdF_n*Nevents/100)
+    print "%d +/- %d events, n > kF %d, p(rec) > kF %d events" % (int(Nevents) , int(ROOT.sqrt(Nevents)) , int(NTailGen_n) , int(NTailGen_p))
+
+
+
+    hTailGen_n  = ROOT.TH1F("hTailGen_n","",Nbins,0,0.7)
+    plot.SetFrame(hTailGen_n ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events",colorGen,colorGen)
+    hTailWtdB_n = ROOT.TH1F("hTailWtdB_n","",Nbins,0,0.7)
+    plot.SetFrame(hTailWtdB_n ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events" ,colorWtdB,colorWtdB)
+    hTailWtdF_n = ROOT.TH1F("hTailWtdF_n","",Nbins,0,0.7)
+    plot.SetFrame(hTailWtdF_n ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events" ,colorWtdF,colorWtdF)
+    hTailGen_n_k4 = ROOT.TH1F("hTailGen_n_k4","",Nbins,0,0.7)
+    plot.SetFrame(hTailGen_n_k4 ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]",colorGen,colorGen)
+    hTailWtdB_n_k4 = ROOT.TH1F("hTailWtdB_n_k4","",Nbins,0,0.7)
+    plot.SetFrame(hTailWtdB_n_k4 ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]" ,colorWtdB,colorWtdB)
+    hTailWtdF_n_k4 = ROOT.TH1F("hTailWtdF_n_k4","",Nbins,0,0.7)
+    plot.SetFrame(hTailWtdF_n_k4 ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]" ,colorWtdF,colorWtdF)
    
-    for bin in range(kF_bin,Nbins):
-        k = hGen.GetXaxis().GetBinCenter(bin)
-        hTailGen.SetBinContent( bin , 100 * hGen.GetBinContent(bin) / hGen.Integral() )
-        hTailWtd.SetBinContent( bin , 100 * hWtd.GetBinContent(bin) /  hWtd.Integral() )
-        hTlGn_k4.SetBinContent( bin , 100 * pow( k , 4 ) * hGen.GetBinContent(bin) / hGen.Integral() )
-        hTlWd_k4.SetBinContent( bin , 100 * pow( k , 4 ) * hWtd.GetBinContent(bin) /  hWtd.Integral() )
-        hTailRat.SetBinContent( bin , 100 * hTailWtd.GetBinContent(bin) / hTailGen.GetBinContent(bin) )
-    hTailWtd.Draw()
-    hTailGen.Draw("same")
-    anaBack.AddLegend("n momentum dist.",hTailGen,"generated (%.1f%%)"%TailGen
-                                        ,hTailWtd,"weighted (%.1f%%)"%TailWtd,"l");
-    cMomentumDist.cd(2)
-    hTlWd_k4.Draw("")
-    hTlGn_k4.Draw("same")
-
-
+    for bin in range(hGen_n.GetXaxis().FindBin(kF),Nbins):
+        k = hTailGen_n.GetXaxis().GetBinCenter(bin)
+        hTailGen_n.SetBinContent( bin , 100 * hGen_n.GetBinContent(bin) / hGen_n.Integral() )
+        hTailWtdB_n.SetBinContent( bin , 100 * hWtdB_n.GetBinContent(bin) /  hWtdB_n.Integral() )
+        hTailWtdF_n.SetBinContent( bin , 100 * hWtdF_n.GetBinContent(bin) /  hWtdF_n.Integral() )
+        hTailGen_n_k4.SetBinContent( bin , 100 * pow( k , 4 ) * hGen_n.GetBinContent(bin) / hGen_n.Integral() )
+        hTailWtdB_n_k4.SetBinContent( bin , 100 * pow( k , 4 ) * hWtdB_n.GetBinContent(bin) / hWtdB_n.Integral() )
+        hTailWtdF_n_k4.SetBinContent( bin , 100 * pow( k , 4 ) * hWtdF_n.GetBinContent(bin) / hWtdF_n.Integral() )
     cMomentumDist.cd(3)
-    hTailRat.Draw()
-
+    hTailWtdB_n.Draw()
+    hTailGen_n.Draw("same")
+    hTailWtdF_n.Draw("same")
+    anaB.AddLegend("n momentum dist."
+                   ,hTailGen_n,"generated (%.1f%% ~ %d+/-%d)"%(TailGen_n,int(NTailGen_n),int(ROOT.sqrt(NTailGen_n)))
+                   ,hTailWtdB_n,"Backwards (%.1f%% ~ %d+/-%d)"%(TailWtdB_n,int(NTailWtdB_n),int(ROOT.sqrt(NTailWtdB_n)))
+                   ,hTailWtdF_n,"Backwards (%.1f%% ~ %d+/-%d)"%(TailWtdF_n,int(NTailWtdF_n),int(ROOT.sqrt(NTailWtdF_n)))
+                   ,"F");
 
     cMomentumDist.cd(4)
-    hGenF = anaForward.H1("n.P()",cutGen,"HIST",Nbins,0,0.7,"n momentum dist. (" + NModel + ")","n momentum [GeV/c]","",colorGen,colorGen)
-    hWtdF = anaForward.H1("n.P()",cutW,"HIST same",Nbins,0,0.7,"","","",colorWeighted,colorWeighted)
-    
-    
-
-    TailGenF = 100 * hGenF.Integral(hGenF.GetXaxis().FindBin(0.26),hGenF.GetNbinsX()) / hGenF.Integral()
-    TailWtdF = 100 * hWtdF.Integral(hWtdF.GetXaxis().FindBin(0.26),hWtdF.GetNbinsX()) / hWtdF.Integral()
-
-
-    hTailGenF = ROOT.TH1F("hTailGenF","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailGenF ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events",colorGen,0)
-    hTailWtdF = ROOT.TH1F("hTailWtdF","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailWtdF ,"n momentum distribution tail","n momentum [GeV/c]","% of mean field events" ,colorWeighted,0)
-    hTlGn_k4F = ROOT.TH1F("hTlGn_k4F","",Nbins,0,0.7)
-    anaForward.SetFrame(hTlGn_k4F ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]",colorGen,0)
-    hTlWd_k4F = ROOT.TH1F("hTlWd_k4F","",Nbins,0,0.7)
-    anaForward.SetFrame(hTlWd_k4F ,"tail times k ^{4}","n momentum [GeV/c]","MF% #times k ^{4} [a.u.]" ,colorWeighted,0)
-    hTailRatF = ROOT.TH1F("hTailRatF","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailRatF ,"ratio of increase in tail","n momentum [GeV/c]","% of generated" , 4 , 38)
-    
-    for bin in range(kF_bin,Nbins):
-        k = hGen.GetXaxis().GetBinCenter(bin)
-        hTailGenF.SetBinContent( bin , 100 * hGenF.GetBinContent(bin) / hGenF.Integral() )
-        hTailWtdF.SetBinContent( bin , 100 * hWtdF.GetBinContent(bin) / hWtdF.Integral() )
-        hTlGn_k4F.SetBinContent( bin , 100 * pow( k , 4 ) * hGenF.GetBinContent(bin) / hGenF.Integral() )
-        hTlWd_k4F.SetBinContent( bin , 100 * pow( k , 4 ) * hWtdF.GetBinContent(bin) / hWtdF.Integral() )
-        hTailRatF.SetBinContent( bin , 100 * hTailWtdF.GetBinContent(bin) / hTailGenF.GetBinContent(bin) )
-    hTailGenF.Draw()
-    hTailWtdF.Draw("same")
-    anaForward.AddLegend("n momentum dist.",hTailGenF,"generated (%.1f%%)"%TailGenF ,hTailWtdF,"weighted (%.1f%%)"%TailWtdF,"l");
-    cMomentumDist.cd(5)
-    hTlGn_k4F.Draw("")
-    hTlWd_k4F.Draw("same")
-    cMomentumDist.cd(6)
-    hTailRatF.Draw()
-
+    hTailWtdB_n_k4.Draw()
+    hTailGen_n_k4.Draw("same")
+    hTailWtdF_n_k4.Draw("same")
+ 
+   
     # neutron before reaction
-    cMomentumDist.cd(7)
-    hTailFBasymGen = ROOT.TH1F("hTailFBasymGen","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailFBasymGen ,"forward/backward asym.","n momentum [GeV/c]","Backward n / Forwad n [%]",colorGen,0)
-    hTailFBasymWtd = ROOT.TH1F("hTailFBasymWtd","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailFBasymWtd ,"forward/backward asym.","n momentum [GeV/c]","Backward n / Forwad n [%]",colorWeighted,0)
-    for bin in range(kF_bin,Nbins):
-        hTailFBasymGen.SetBinContent( bin , 100 * hGen.GetBinContent(bin) / hGenF.GetBinContent(bin) )
-        hTailFBasymWtd.SetBinContent( bin , 100 * hWtd.GetBinContent(bin) / hWtdF.GetBinContent(bin) )
-
-
-    hTailFBasymWtd.Draw("")
-    hTailFBasymGen.Draw("same")
-    anaForward.AddLegend("integrated above k_{F}",hTailFBasymGen,"generated (100%%)",hTailFBasymWtd,"weighted (%.1f%%)"%(100.*hTailFBasymWtd.Integral()/hTailFBasymGen.Integral()),"F" )
-
-    # recoil proton
-    cMomentumDist.cd(8)
-    hGenB_p = anaBack.H1("p.P()",cutGen,"HIST",Nbins,0,0.7,"p momentum dist. (forward)","p momentum [GeV/c]","",colorGen,colorGen)
-    hWtdB_p = anaBack.H1("p.P()",cutW,"HIST same",Nbins,0,0.7,"","","",colorWeighted,colorWeighted)
-    hGenF_p = anaForward.H1("p.P()",cutGen,"HIST",Nbins,0,0.7,"p momentum dist. (forward)","p momentum [GeV/c]","",colorGen,colorGen)
-    hWtdF_p = anaForward.H1("p.P()",cutW,"HIST same",Nbins,0,0.7,"","","",colorWeighted,colorWeighted)
-    hTailFBasymGen_p = ROOT.TH1F("hTailFBasymGen_p","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailFBasymGen_p ,"forward/backward asym.","p(rec) momentum [GeV/c]","Backward p(rec) / Forwad p(rec) [%]",colorGen,0)
-    hTailFBasymWtd_p = ROOT.TH1F("hTailFBasymWtd_p","",Nbins,0,0.7)
-    anaForward.SetFrame(hTailFBasymWtd_p ,"forward/backward asym.","p(rec) momentum [GeV/c]","Backward p(rec) / Forwad p(rec) [%]",colorWeighted,0)
-    for bin in range(kF_bin,Nbins):
-        hTailFBasymGen_p.SetBinContent( bin , 100 * hGenB_p.GetBinContent(bin) / hGenF_p.GetBinContent(bin) )
-        hTailFBasymWtd_p.SetBinContent( bin , 100 * hWtdB_p.GetBinContent(bin) / hWtdF_p.GetBinContent(bin) )
-
-
-    hTailFBasymWtd_p.Draw("")
-    hTailFBasymGen_p.Draw("same")
-    anaForward.AddLegend("integrated above k_{F}",hTailFBasymGen_p,"generated (100%%)",hTailFBasymWtd_p,"weighted (%.1f%%)"%(100.*hTailFBasymWtd_p.Integral()/hTailFBasymGen_p.Integral()),"F" )
-
-    cMomentumDist.cd(9)
-    anaBack.H1("nu.E()",cutGen,"HIST",100,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
-
+    cMomentumDist.cd(5)
+    hFBasymWtd_n = ROOT.TH1F("hFBasymWtd_n","",Nbins,0,0.7)
+    plot.SetFrame(hFBasymWtd_n ,"struck n f/b asym.","n momentum [GeV/c]","Backward n / Forwad n [%]",colorAsym,colorAsym)
+    hFBasymGen_n = ROOT.TH1F("hFBasymGen_n","",Nbins,0,0.7)
+    for bin in range(hGen_n.GetXaxis().FindBin(kF),Nbins):
+        print "bin=%d, hWtdB_n.GetBinContent(bin) =%f hWtdF_n.GetBinContent(bin)=%f "%(bin,hWtdB_n.GetBinContent(bin),hWtdF_n.GetBinContent(bin) )
+        hFBasymWtd_n.SetBinContent( bin , 100 * hWtdB_n.GetBinContent(bin) / hWtdF_n.GetBinContent(bin) )
+        hFBasymGen_n.SetBinContent( bin , 100 )
+    hFBasymWtd_n.Draw()
+#    frac = float(hFBasymWtd_n.Integral())/hFBasymGen_n.Integral()
+#    plot.Text(0.1 , hFBasymWtd_n.GetMaximum()
+#              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_n),int(ROOT.sqrt((frac-1)*NTailGen_n))))
+#
+#    # recoil proton
+#    cMomentumDist.cd(6)
+#    hFBasymWtd_p = ROOT.TH1F("hFBasymWtd_p","",Nbins,0,0.7)
+#    plot.SetFrame(hFBasymWtd_p ,"recoil p f/b asym.","p(rec) momentum [GeV/c]","Backward p(rec) / Forwad p(rec) [%]",colorAsym,colorAsym)
+#    hFBasymGen_p = ROOT.TH1F("hFBasymGen_p","",Nbins,0,0.7)
+#    for bin in range(hGen_n.GetXaxis().FindBin(kF),Nbins):
+#        hFBasymWtd_p.SetBinContent( bin , 100 * hWtdB_p.GetBinContent(bin) / hWtdF_p.GetBinContent(bin) )
+#        hFBasymGen_p.SetBinContent( bin , 100 )
+#    hFBasymWtd_p.Draw()
+#    frac = float(hFBasymWtd_p.Integral())/hFBasymGen_p.Integral()
+#    plot.Text(0.1 , hFBasymWtd_p.GetMaximum()
+#              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_p),int(ROOT.sqrt((frac-1)*NTailGen_p))))
     cMomentumDist.Update()
     wait()
+    cMomentumDist.SaveAs("~/Desktop/bin%d.pdf"%PpPmuBin)
 
 
 

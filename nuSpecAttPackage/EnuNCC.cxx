@@ -152,14 +152,11 @@ void EnuNCC::RunInteractions ( TString NuclearModel , TString nuFlux , int Ninte
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::GenerateNeutrino( TString nuFlux ){
-    if (nuFlux == "BNB flux") {
+    if (nuFlux == "BNB flux" || nuFlux == "Ev from mcc6") {
         Ev = hEflux -> GetRandom();
     }
     else if (nuFlux == "monochromatic neutrino 300 MeV"){
         Ev = 0.3;
-    }
-    else if (nuFlux == "mcc6 |p(p)|+|p(mu)|<800" || nuFlux == "mcc6 |p(p)|+|p(mu)|<600"  || nuFlux == "mcc6 |p(p)|+|p(mu)|<400" ){
-        Ev = hEflux -> GetRandom();
     }
     nu = TLorentzVector( 0 , 0 , Ev , Ev );
 }
