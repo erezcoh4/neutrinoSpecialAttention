@@ -21,13 +21,13 @@ Nbins           = 25
 kF              = 0.25
 
 
-PpPmuBin    = 4
-PpPmuMin    = [0   , 400 , 600 , 800  , 1000]
-PpPmuMax    = [400 , 600 , 800 , 1000 , 3000]
+PpPmuBin    = 0
+PpPmuMin    = [0   , 400 , 600 , 800  ]
+PpPmuMax    = [400 , 600 , 800 , 3000 ]
 hEflux      = []
 anaBack     = []
 anaFrwd     = []
-Path        = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles"
+Path        = "/Users/erezcohen/Desktop/uboone/AnaFiles"
 plot        = TPlots()
 analysis    = TAnalysis()
 for i in range(0,len(PpPmuMin)):
@@ -228,22 +228,22 @@ if DoMomentumDist:
         hFBasymWtd_n.SetBinContent( bin , 100 * hWtdB_n.GetBinContent(bin) / hWtdF_n.GetBinContent(bin) )
         hFBasymGen_n.SetBinContent( bin , 100 )
     hFBasymWtd_n.Draw()
-#    frac = float(hFBasymWtd_n.Integral())/hFBasymGen_n.Integral()
-#    plot.Text(0.1 , hFBasymWtd_n.GetMaximum()
-#              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_n),int(ROOT.sqrt((frac-1)*NTailGen_n))))
-#
-#    # recoil proton
-#    cMomentumDist.cd(6)
-#    hFBasymWtd_p = ROOT.TH1F("hFBasymWtd_p","",Nbins,0,0.7)
-#    plot.SetFrame(hFBasymWtd_p ,"recoil p f/b asym.","p(rec) momentum [GeV/c]","Backward p(rec) / Forwad p(rec) [%]",colorAsym,colorAsym)
-#    hFBasymGen_p = ROOT.TH1F("hFBasymGen_p","",Nbins,0,0.7)
-#    for bin in range(hGen_n.GetXaxis().FindBin(kF),Nbins):
-#        hFBasymWtd_p.SetBinContent( bin , 100 * hWtdB_p.GetBinContent(bin) / hWtdF_p.GetBinContent(bin) )
-#        hFBasymGen_p.SetBinContent( bin , 100 )
-#    hFBasymWtd_p.Draw()
-#    frac = float(hFBasymWtd_p.Integral())/hFBasymGen_p.Integral()
-#    plot.Text(0.1 , hFBasymWtd_p.GetMaximum()
-#              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_p),int(ROOT.sqrt((frac-1)*NTailGen_p))))
+    frac = float(hFBasymWtd_n.Integral())/hFBasymGen_n.Integral()
+    plot.Text(0.1 , hFBasymWtd_n.GetMaximum()
+              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_n),int(ROOT.sqrt((frac-1)*NTailGen_n))))
+
+    # recoil proton
+    cMomentumDist.cd(6)
+    hFBasymWtd_p = ROOT.TH1F("hFBasymWtd_p","",Nbins,0,0.7)
+    plot.SetFrame(hFBasymWtd_p ,"recoil p f/b asym.","p(rec) momentum [GeV/c]","Backward p(rec) / Forwad p(rec) [%]",colorAsym,colorAsym)
+    hFBasymGen_p = ROOT.TH1F("hFBasymGen_p","",Nbins,0,0.7)
+    for bin in range(hGen_n.GetXaxis().FindBin(kF),Nbins):
+        hFBasymWtd_p.SetBinContent( bin , 100 * hWtdB_p.GetBinContent(bin) / hWtdF_p.GetBinContent(bin) )
+        hFBasymGen_p.SetBinContent( bin , 100 )
+    hFBasymWtd_p.Draw()
+    frac = float(hFBasymWtd_p.Integral())/hFBasymGen_p.Integral()
+    plot.Text(0.1 , hFBasymWtd_p.GetMaximum()
+              , "above k_{F} %.1f%% ~ %d+/-%d excess"%(100.*(frac-1),int((frac-1)*NTailGen_p),int(ROOT.sqrt((frac-1)*NTailGen_p))))
     cMomentumDist.Update()
     wait()
     cMomentumDist.SaveAs("~/Desktop/bin%d.pdf"%PpPmuBin)

@@ -9,18 +9,18 @@ analysis = TAnalysis()
 
 
 DoDraw  = False
-#NModel  = "CFGnBack"
-NModel = "CFGnForward"
+NModel  = "CFGnBack"
+#NModel = "CFGnForward"
 
 nuFlux = "Ev from mcc6"
 #nuFlux = "monochromatic neutrino 300 MeV"
 
-Path = "/Users/erezcohen/Desktop/uboone/SpecialAttention/AnaFiles/"
+Path = "/Users/erezcohen/Desktop/uboone/AnaFiles/"
 
 
 
-PpPmuMin = [0   , 400 , 600 , 800  , 1000]
-PpPmuMax = [400 , 600 , 800 , 1000 , 3000]
+PpPmuMin = [0   , 400 , 600 , 800 ]
+PpPmuMax = [400 , 600 , 800 , 3000]
 hEflux   = []
 for i in range(0,len(PpPmuMin)):
     hEflux.append(analysis.GetHistoFromAFile("/Users/erezcohen/Desktop/uBoone/SpecialAttention/Data/MCC6recEventsEv.root"
