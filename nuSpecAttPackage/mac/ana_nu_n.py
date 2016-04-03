@@ -1,3 +1,4 @@
+import sys
 import ROOT
 from ROOT import TPlots
 from ROOT import TAnalysis
@@ -8,33 +9,38 @@ ROOT.gStyle.SetOptStat(0000)
 
 DoAllVariables  = False
 DoAsymmetery    = False
-DoMomentumDist  = True
+DoMomentumDist  = False
+Do_pBackFrwrd   = True
 
-
-cutGen          = ROOT.TCut()
-cutW            = ROOT.TCut("XsecWeight")
+#cutGen          = ROOT.TCut()
+#cutW            = ROOT.TCut("XsecWeight")
+#cut_nB          = ROOT.TCut("n.Pz()<0")
+#cut_nF          = ROOT.TCut("n.Pz()>0")
+#cut_pB          = ROOT.TCut("prec.Pz()<0")
+#cut_pF          = ROOT.TCut("prec.Pz()>0")
 colorGen        = 1
+colorWtd        = 2
 colorWtdB       = 2
 colorWtdF       = 4
 colorAsym       = 6
-Nbins           = 25
+Nbins           = 15
 kF              = 0.25
 
-
-PpPmuBin    = 0
+PpPmuBin    = int(sys.argv[1])
+print "calculating for PpPmuBin = %d"%PpPmuBin
 PpPmuMin    = [0   , 400 , 600 , 800  ]
 PpPmuMax    = [400 , 600 , 800 , 3000 ]
 hEflux      = []
-anaBack     = []
-anaFrwd     = []
+#anaBack     = []
+#anarwd     = []
 Path        = "/Users/erezcohen/Desktop/uboone/AnaFiles"
 plot        = TPlots()
 analysis    = TAnalysis()
 for i in range(0,len(PpPmuMin)):
     hEflux.append(analysis.GetHistoFromAFile("/Users/erezcohen/Desktop/uBoone/SpecialAttention/Data/MCC6recEventsEv.root"
                                              , "hEflux_%dPpPlusPmu%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))))
-    anaBack.append(TPlots(Path+"/CCinteractionsCFGnBack_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nB%d"%i ))
-    anaFrwd.append(TPlots(Path+"/CCinteractionsCFGnForward_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nF%d"%i ))
+#    anaBack.append(TPlots(Path+"/CCinteractionsCFGnBack_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nB%d"%i ))
+#    anaFrwd.append(TPlots(Path+"/CCinteractionsCFGnForward_%d_PpPmu_%d"%(int(PpPmuMin[i]),int(PpPmuMax[i]))+".root", "anaTree" , "nF%d"%i ))
 
 
 if DoAllVariables:
@@ -249,6 +255,43 @@ if DoMomentumDist:
     cMomentumDist.SaveAs("~/Desktop/bin%d.pdf"%PpPmuBin)
 
 
+# April - 03
+if Do_pBackFrwrd:
+    
+    ana = TPlots(Path+"/CCinteractionsCFG_%d_PpPmu_%d"%(int(PpPmuMin[PpPmuBin]),int(PpPmuMax[PpPmuBin]))+".root", "anaTree" , "CFG%d"%PpPmuBin )
+    Nevents = hEflux[PpPmuBin].Integral()
+    
+    cMomentumDist = ana.CreateCanvas("n momentum dist.", "Divide" , 3 , 1)
+    
+    cMomentumDist.cd(1)
+    ana.H1("nu.E()",ROOT.TCut(),"HIST",25,0,2.,"neutrino generated energy","E#nu [GeV]","",1,1)
+    
+    #    cMomentumDist.cd(2)
+    hGen_n  = ana.H1("n.P()",ROOT.TCut(),"goff",Nbins,0,0.7,"n momentum dist.","n momentum [GeV/c]","",colorGen,colorGen)
+    hWtdB_n = ana.H1("n.P()",ROOT.TCut("n.Pz()<0 && XsecWeight"),"goff",Nbins,0,0.7,"","","",colorWtdB,colorWtdB)
+    hWtdF_n = ana.H1("n.P()",ROOT.TCut("n.Pz()>0 && XsecWeight"),"goff",Nbins,0,0.7,"","","",colorWtdF,colorWtdF)
+    hGen_p  = ana.H1("p.P()",ROOT.TCut(),"goff",Nbins,0,0.7,"p momentum dist.","p momentum [GeV/c]","",colorGen,colorGen)
+    hWtdB_p = ana.H1("p.P()",ROOT.TCut("prec.Pz()<0 && XsecWeight"),"goff",Nbins,0,0.7,"","","",colorWtdB,colorWtdB)
+    hWtdF_p = ana.H1("p.P()",ROOT.TCut("prec.Pz()<0 && XsecWeight"),"goff",Nbins,0,0.7,"","","",colorWtdF,colorWtdF)
+    cMomentumDist.cd(2)
+    ana.H1("n.Pz()/fabs(n.Pz())",ROOT.TCut(""),"HIST",Nbins,-1.5,1.5,"n direction","sign(n^{z})","",colorGen,colorGen)
+    hn = ana.H1("n.Pz()/fabs(n.Pz())",ROOT.TCut("XsecWeight"),"HIST same",Nbins,-1.5,1.5,"n direction","sign(n^{z})","",colorWtd,colorWtd)
+    fBack = hn.GetBinContent(hn.GetXaxis().FindBin(-1))/hn.Integral()
+    fFrwd = hn.GetBinContent(hn.GetXaxis().FindBin(1))/hn.Integral()
+    plot.Text(-0.5 , hn.GetMaximum() ,"struck neutron",colorWtd)
+    plot.Text(-0.5 , 0.9*hn.GetMaximum() ,"B~%.1f%% / F~%.1f%%"%(100.*fBack,100.*fFrwd),colorWtd)
+
+    cMomentumDist.cd(3)
+    ana.H1("prec.Pz()/fabs(prec.Pz())",ROOT.TCut(""),"HIST",Nbins,-1.5,1.5,"recoil proton momentum direction","sign(p^{z})","",colorGen,colorGen)
+    hp = ana.H1("prec.Pz()/fabs(prec.Pz())",ROOT.TCut("XsecWeight"),"HIST same",Nbins,-1.5,1.5,"recoil proton momentum direction","sign(p^{z})","",colorWtd,colorWtd) # n.P()>0.25
+    fBack = hp.GetBinContent(hp.GetXaxis().FindBin(-1))/hp.Integral()
+    fFrwd = hp.GetBinContent(hp.GetXaxis().FindBin(1))/hp.Integral()
+    plot.Text(-0.5 , 0.6*hp.GetMaximum() ,"recoil proton",colorWtd)
+    plot.Text(-0.5 , 0.5*hp.GetMaximum() ,"B~%.1f%% / F~%.1f%%"%(100.*fBack,100.*fFrwd),colorWtd)
+
+    cMomentumDist.Update()
+    wait()
+    cMomentumDist.SaveAs("~/Desktop/bin%d.pdf"%PpPmuBin)
 
 
 

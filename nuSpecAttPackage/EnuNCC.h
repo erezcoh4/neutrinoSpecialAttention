@@ -46,8 +46,8 @@ public:
     
     
     TVector3        Pcm ; // c.m. motion of the pair
-    TLorentzVector  nu  , n  , nu_INnRF , W , mu , p;
-    
+    TLorentzVector  nu  , n  , nu_INnRF , W , mu , p , prec;
+    TString         nDirection          , precDirection;
     
     /// Default constructor
     EnuNCC(){}

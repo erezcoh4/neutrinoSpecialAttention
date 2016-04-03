@@ -9,7 +9,8 @@ analysis = TAnalysis()
 
 
 DoDraw  = False
-NModel  = "CFGnBack"
+NModel  = "CFG"
+#NModel  = "CFGnBack"
 #NModel = "CFGnForward"
 
 nuFlux = "Ev from mcc6"

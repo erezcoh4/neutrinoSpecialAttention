@@ -121,10 +121,12 @@ void EnuNCC::InitOutTree(){
     OutTree -> Branch("W"           ,"TLorentzVector"       ,&W);
     OutTree -> Branch("mu"          ,"TLorentzVector"       ,&mu);
     OutTree -> Branch("p"           ,"TLorentzVector"       ,&p);
+    OutTree -> Branch("prec"        ,"TLorentzVector"       ,&prec);
     OutTree -> Branch("Pcm"         ,"TVector3"             ,&Pcm);
     OutTree -> Branch("Ev_INnRF"    ,&Ev_INnRF              ,"Ev_INnRF/D"); // nu energy in neutron RestFrame
     OutTree -> Branch("XsecWeight"  ,&XsecWeight            ,"XsecWeight/D");    // cross section weight
     OutTree -> Branch("XsecLabFrame",&XsecLabFrame          ,"XsecLabFrame/D");
+    OutTree -> Branch("nDirection"  ,&nDirection            ,"nDirection/C");    // cross section weight
     
     
     std::cout << "Initialized Output Tree EnuNCC on " << OutTree -> GetTitle() << std::endl;
@@ -145,7 +147,7 @@ void EnuNCC::RunInteractions ( TString NuclearModel , TString nuFlux , int Ninte
         CalcRestFrameEv();
         GenerateRecoilProton( 0.0 , 0.14 );
         if(DoPrint) PrintDATA(i);
-        OutTree -> Fill();
+        if(n.P() > 0.25) OutTree -> Fill();
     }
 }
 
@@ -188,11 +190,12 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
 
     else if (NuclearModel == "CFG") {
         nInSRC = (rand.Uniform() < 0.20) ? true : false;
-        //    Pn = (NuclearModel == "FG") ? hFG -> GetRandom() / 1000. : hCFG -> GetRandom() / 1000. ;
-        if (!nInSRC)
-        Pn = rand.Uniform(0,0.25);
-        else if (nInSRC)
-        Pn = SRCk4Tail -> GetRandom() / 1000;
+        if (!nInSRC){
+            Pn = rand.Uniform(0,0.25);
+        }
+        else if (nInSRC) {
+            Pn = SRCk4Tail -> GetRandom() / 1000;
+        }
         rand.Sphere(Px,Py,Pz,Pn);
         n = TLorentzVector( Px , Py , Pz , sqrt( Pn*Pn + Mn*Mn ) );
     }
@@ -232,7 +235,7 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
         }
         n = TLorentzVector( 0 , 0 , Pn , sqrt( Pn*Pn + Mn*Mn ) );
     }
-
+    nDirection = (n.Pz() < 0) ? "backward" : "forward";
     
 }
 
@@ -241,7 +244,14 @@ void EnuNCC::GenerateNeutron( TString NuclearModel ){
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EnuNCC::GenerateRecoilProton( float mean , float sigma ){
     Pcm = TVector3( rand.Gaus( mean , sigma ) , rand.Gaus( mean , sigma ) , rand.Gaus( mean , sigma ) );
-    p.SetVectM( Pcm - n.Vect()  , Mp );
+    if (n.P() > 0.25) { // SRC pair above kF
+        prec.SetVectM( Pcm - n.Vect()  , Mp );
+    }
+    else {
+        prec.SetVectM( TVector3(0 , 0 , 0) , Mp );
+    }
+    precDirection = (n.Pz() < 0) ? "backward" : "forward";
+
 }
 
 
@@ -261,6 +271,8 @@ void EnuNCC::PrintDATA(int entry){
     SHOW(entry);
     SHOWTLorentzVector(nu);
     SHOWTLorentzVector(n);
+    SHOWTVector3(Pcm);
+    SHOWTLorentzVector(prec);
     SHOWTLorentzVector(nu_INnRF);
     SHOW(Ev);
     SHOW(Ev_INnRF);
