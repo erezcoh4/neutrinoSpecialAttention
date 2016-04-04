@@ -33,46 +33,47 @@ void EnuNCC::ImpXsecGraph ( TString XsecFileName , const int Npoints , bool DoPl
 void EnuNCC::ImpMomentumDist(bool DoPlot){
     // implement momentum distributions: Fermi Gas (FG) and Correlated Fermi Gas (CFG) 
     
-    
-    Double_t        c0 = 4.16 ; // +/- 0.95..
-    Double_t       k_F = 250 ;
-    Double_t       E_F = k_F * k_F / (2. * 940.); // non relativistic
-    Double_t      E_F0 = 12.5 / ( ( pow(2.,2./3) - 1 ) * (3./5.));
-    Double_t      k_F0 = sqrt( 2. * 940. * E_F0 );
-    Double_t  rho2rho0 = pow( ( pow(2.,2./3) - 1 ) * (3./5.) * (E_F/12.5)   , 3./2.);
-    Double_t    lambda = 2.75 ;// +/- 0.25 high-momentum cutoff
-    Double_t       pi2 = pow(TMath::Pi(),2);
-    Double_t        A0 = (3 * pi2 / pow(k_F0,3)) * (1./rho2rho0) * (1 - (1 - (1./lambda)*pow(rho2rho0,1./3.)) * (c0 / pi2 ));
-    SRCk4Tail          = new TF1("tail",Form("%f*%f/(x**4)",c0,k_F),k_F,lambda*k_F0);
+//    
+//    Double_t        c0 = 4.16 ; // +/- 0.95..
+//    Double_t       k_F = 250 ;
+//    Double_t       E_F = k_F * k_F / (2. * 940.); // non relativistic
+//    Double_t      E_F0 = 12.5 / ( ( pow(2.,2./3) - 1 ) * (3./5.));
+//    Double_t      k_F0 = sqrt( 2. * 940. * E_F0 );
+//    Double_t  rho2rho0 = pow( ( pow(2.,2./3) - 1 ) * (3./5.) * (E_F/12.5)   , 3./2.);
+//    Double_t    lambda = 2.75 ;// +/- 0.25 high-momentum cutoff
+//    Double_t       pi2 = pow(TMath::Pi(),2);
+//    Double_t        A0 = (3 * pi2 / pow(k_F0,3)) * (1./rho2rho0) * (1 - (1 - (1./lambda)*pow(rho2rho0,1./3.)) * (c0 / pi2 ));
+//    SRCk4Tail          = new TF1("tail",Form("%f*%f/(x**4)",c0,k_F),k_F,lambda*k_F0);
+//
+//    int Nbins = 100;
+//    float bin_content , k;
+//
+//    // Fermi Gas momentum dist.
+//    hFG = new TH1F("hFG" , "Fermi Gas momentum dist." , Nbins , 0 , lambda*k_F0 );
+//    for (int bin = 0; bin < Nbins ; bin++){
+//        k = hFG -> GetXaxis() -> GetBinCenter( bin );
+//        bin_content = ( k < k_F ) ? 1 : 0;
+//        hFG -> SetBinContent( bin , bin_content );
+//    }
+//
+//    
+//    // Correlated Fermi Gas momentum dist.
+//    hCFG = new TH1F("hCFG" , "Correlated Fermi Gas momentum dist." , Nbins , 0 , lambda*k_F0 );
+//    for (int bin = 0; bin < Nbins ; bin++){
+//        k = hCFG -> GetXaxis() -> GetBinCenter( bin );
+//        bin_content = ( k < k_F ) ? A0 : SRCk4Tail -> Eval(k);
+//        hCFG -> SetBinContent( bin , bin_content );
+//    }
+//    
+//    float Integral = 0 , Tail = 0;
+//    for (int bin = 0; bin < Nbins ; bin++){
+//        k = hCFG -> GetXaxis() -> GetBinCenter( bin );
+//        Integral += k * k * hCFG -> GetBinContent( bin );
+//        Tail     += ( k_F < k ) ? k * k * hCFG -> GetBinContent( bin ) : 0 ;
+//    }
+//    float FracTail = Tail / Integral;//analysis.IntegralH1D(hCFG , 250 , lambda*k_F0 ) / analysis.IntegralH1D(hCFG , 0 , lambda*k_F0 );
 
-    int Nbins = 100;
-    float bin_content , k;
-
-    // Fermi Gas momentum dist.
-    hFG = new TH1F("hFG" , "Fermi Gas momentum dist." , Nbins , 0 , lambda*k_F0 );
-    for (int bin = 0; bin < Nbins ; bin++){
-        k = hFG -> GetXaxis() -> GetBinCenter( bin );
-        bin_content = ( k < k_F ) ? 1 : 0;
-        hFG -> SetBinContent( bin , bin_content );
-    }
-
-    
-    // Correlated Fermi Gas momentum dist.
-    hCFG = new TH1F("hCFG" , "Correlated Fermi Gas momentum dist." , Nbins , 0 , lambda*k_F0 );
-    for (int bin = 0; bin < Nbins ; bin++){
-        k = hCFG -> GetXaxis() -> GetBinCenter( bin );
-        bin_content = ( k < k_F ) ? A0 : SRCk4Tail -> Eval(k);
-        hCFG -> SetBinContent( bin , bin_content );
-    }
-    
-    float Integral = 0 , Tail = 0;
-    for (int bin = 0; bin < Nbins ; bin++){
-        k = hCFG -> GetXaxis() -> GetBinCenter( bin );
-        Integral += k * k * hCFG -> GetBinContent( bin );
-        Tail     += ( k_F < k ) ? k * k * hCFG -> GetBinContent( bin ) : 0 ;
-    }
-    float FracTail = Tail / Integral;//analysis.IntegralH1D(hCFG , 250 , lambda*k_F0 ) / analysis.IntegralH1D(hCFG , 0 , lambda*k_F0 );
-    SHOW(FracTail);
+    hCFG = calculations.CFGMomentumDist(DoPlot,SRCk4Tail);
     
     if (DoPlot)
         DrawMomentumDist();

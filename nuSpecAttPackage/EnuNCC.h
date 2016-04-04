@@ -31,6 +31,7 @@ public:
     
     TPlots    plot;
     TAnalysis analysis;
+    TCalculations calculations;
     TRandom3  rand;
     
     TTree   * OutTree;
